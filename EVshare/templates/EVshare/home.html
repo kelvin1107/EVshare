@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}EVshare — Find & Share EV Chargers{% endblock %}
+
+{% block main_class %}no-top-pad{% endblock %}
+
+{% block pre_main %}
+  <section class="hero-bleed">
+    <div class="hero-bleed__bg" aria-hidden="true">
+      <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="glow" cx="78%" cy="38%" r="55%">
+            <stop offset="0%" stop-color="#2a5c50"/>
+            <stop offset="55%" stop-color="#12302B"/>
+            <stop offset="100%" stop-color="#0B1F1C"/>
+          </radialGradient>
+          <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="55%" stop-color="#0B1F1C" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#0B1F1C" stop-opacity="1"/>
+          </linearGradient>
+        </defs>
+        <rect width="1600" height="900" fill="url(#glow)"/>
+        <g opacity="0.15" stroke="#C6FF3D" stroke-width="1">
+          <path d="M0 780 H1600"/><path d="M0 680 H1600"/><path d="M0 580 H1600"/>
+          <path d="M200 0 V900"/><path d="M500 0 V900"/><path d="M900 0 V900"/><path d="M1300 0 V900"/>
+        </g>
+        <g transform="translate(1080,260)" opacity="0.9">
+          <circle r="170" fill="none" stroke="#C6FF3D" stroke-opacity="0.35" stroke-width="1.5"/>
+          <circle r="230" fill="none" stroke="#C6FF3D" stroke-opacity="0.18" stroke-width="1.5"/>
+          <path d="M-15 -70 L-75 30 H-25 L-35 100 L45 -10 H-5 L5 -70 Z" fill="#C6FF3D"/>
+        </g>
+        <rect width="1600" height="900" fill="url(#fade)"/>
+      </svg>
+    </div>
+
+    <div class="hero-bleed__content">
+      <h1 class="hero-bleed__title">It&rsquo;s <span class="circled-word">easy<svg class="circled-word__ring" viewBox="0 0 220 90" preserveAspectRatio="none"><ellipse cx="110" cy="45" rx="106" ry="41"/></svg></span> to charge<br>on EVshare.</h1>
+      <p class="hero-bleed__sub">Owners list their EV chargers. Drivers find and book one nearby — in minutes.</p>
+      <div class="hero-bleed__actions">
+        <a href="{% url 'contact' %}" class="btn btn-pill-outline btn-lg">Request a call back</a>
+        <a href="{% url 'search_chargers' %}" class="btn btn-pill-solid-dark btn-lg">Find a charger</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker">
+    <div class="ticker__track">
+      <span>Real-time availability</span>
+      <span>Instant booking</span>
+      <span>Verified owners</span>
+      <span>Pay per hour</span>
+      <span>24/7 support</span>
+      <span>Real-time availability</span>
+      <span>Instant booking</span>
+      <span>Verified owners</span>
+      <span>Pay per hour</span>
+      <span>24/7 support</span>
+    </div>
+  </div>
+{% endblock %}
+
+{% block content %}
+<h2 class="side-title">Recently listed</h2>
+<div class="card-grid">
+  {% for charger in featured %}
+    <a href="{% url 'charger_detail' charger.pk %}" class="card">
+      <div class="card-top">
+        <span class="badge">{{ charger.get_connector_type_display }}</span>
+        <span class="card-price">₹{{ charger.price_per_hour }}/hr</span>
+      </div>
+      <h3>{{ charger.title }}</h3>
+      <p class="card-meta">{{ charger.city }} · {{ charger.power_kw }} kW</p>
+    </a>
+  {% empty %}
+    <p class="empty-state">No chargers listed yet — be the first!</p>
+  {% endfor %}
+</div>
+{% endblock %}

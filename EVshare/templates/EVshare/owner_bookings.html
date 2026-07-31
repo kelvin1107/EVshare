@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Requests on My Chargers — EVshare{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Requests on your chargers</h1>
+
+<div class="booking-list">
+  {% for booking in bookings %}
+    <div class="booking-row">
+      <div>
+        <strong>{{ booking.driver.username }}</strong> wants <a href="{% url 'charger_detail' booking.charger.pk %}">{{ booking.charger.title }}</a>
+        <p class="card-meta">{{ booking.start_time }} → {{ booking.end_time }}</p>
+        {% if booking.message %}<p class="card-meta">"{{ booking.message }}"</p>{% endif %}
+      </div>
+
+      <div class="booking-actions">
+        <span class="badge status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+        {% if booking.status == 'pending' %}
+          <a href="{% url 'update_booking_status' booking.pk 'accepted' %}" class="btn btn-primary">Accept</a>
+          <a href="{% url 'update_booking_status' booking.pk 'rejected' %}" class="btn btn-outline">Decline</a>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <p class="empty-state">No requests yet. Share your listing to get your first driver.</p>
+  {% endfor %}
+</div>
+{% endblock %}

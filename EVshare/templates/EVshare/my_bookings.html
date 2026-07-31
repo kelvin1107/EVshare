@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}My Bookings — EVshare{% endblock %}
+
+{% block content %}
+<h1 class="page-title">My booking requests</h1>
+
+<div class="booking-list">
+  {% for booking in bookings %}
+    <div class="booking-row">
+      <div>
+        <a href="{% url 'charger_detail' booking.charger.pk %}"><strong>{{ booking.charger.title }}</strong></a>
+        <p class="card-meta">{{ booking.start_time }} → {{ booking.end_time }}</p>
+      </div>
+      <span class="badge status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+    </div>
+  {% empty %}
+    <p class="empty-state">You haven't requested any chargers yet. <a href="{% url 'search_chargers' %}">Find one now.</a></p>
+  {% endfor %}
+</div>
+{% endblock %}

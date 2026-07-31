@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Search Chargers — EVshare{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Find a charger near you</h1>
+
+<form method="get" class="filter-bar">
+  <input type="text" name="city" placeholder="City" value="{{ selected_city }}">
+  <select name="connector_type">
+    <option value="">Any connector</option>
+    {% for value, label in connector_choices %}
+      <option value="{{ value }}" {% if value == selected_connector %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+<div class="detail-layout">
+  <div class="detail-main">
+    <div class="card-grid" id="cardGrid">
+      {% for charger in chargers %}
+        <a href="{% url 'charger_detail' charger.pk %}"
+           class="card"
+           data-lat="{{ charger.latitude|default_if_none:'' }}"
+           data-lng="{{ charger.longitude|default_if_none:'' }}"
+           data-title="{{ charger.title }}"
+           data-price="{{ charger.price_per_hour }}">
+          <div class="card-top">
+            <span class="badge">{{ charger.get_connector_type_display }}</span>
+            <span class="card-price">₹{{ charger.price_per_hour }}/hr</span>
+          </div>
+          <h3>{{ charger.title }}</h3>
+          <p class="card-meta">{{ charger.city }} · {{ charger.power_kw }} kW</p>
+          <p class="card-owner">Hosted by {{ charger.owner.username }}</p>
+        </a>
+      {% empty %}
+        <p class="empty-state">No chargers found. Try a different city or connector type.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="detail-side">
+    <h2 class="side-title">Map view</h2>
+    <div id="map" style="width:100%; height:420px; border-radius:var(--radius); border:1px solid var(--line);"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const fallback = [9.9252, 78.1198]; // Madurai default
+  const map = L.map('map').setView(fallback, 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19,
+  }).addTo(map);
+
+  const cards = document.querySelectorAll('#cardGrid .card[data-lat]');
+  const points = [];
+
+  cards.forEach((card) => {
+    const lat = parseFloat(card.dataset.lat);
+    const lng = parseFloat(card.dataset.lng);
+    if (isNaN(lat) || isNaN(lng)) return; // skip chargers with no pinned location
+
+    const marker = L.marker([lat, lng]).addTo(map);
+    marker.bindPopup(`<strong>${card.dataset.title}</strong><br>₹${card.dataset.price}/hr`);
+    points.push([lat, lng]);
+  });
+
+  if (points.length === 1) {
+    map.setView(points[0], 14);
+  } else if (points.length > 1) {
+    map.fitBounds(points, { padding: [30, 30] });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}My Profile — EVshare{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Your account</h1>
+<p class="card-meta">
+  <a href="{% url 'my_bookings' %}" class="btn btn-outline">My booking requests</a>
+  <a href="{% url 'owner_bookings' %}" class="btn btn-outline">Requests on my chargers</a>
+</p>
+
+<h2 class="side-title">Your listed chargers</h2>
+<div class="card-grid">
+  {% for charger in chargers %}
+    <a href="{% url 'charger_detail' charger.pk %}" class="card">
+      <h3>{{ charger.title }}</h3>
+      <p class="card-meta">{{ charger.city }}</p>
+    </a>
+  {% empty %}
+    <p class="empty-state">You haven't listed a charger yet. <a href="{% url 'add_charger' %}">Add one.</a></p>
+  {% endfor %}
+</div>
+{% endblock %}

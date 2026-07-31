@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ charger.title }} — EVshare{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+  <div class="detail-main">
+    <span class="badge">{{ charger.get_connector_type_display }}</span>
+    <h1 class="page-title">{{ charger.title }}</h1>
+    <p class="card-meta">{{ charger.address }}, {{ charger.city }}</p>
+    <p class="card-meta">{{ charger.power_kw }} kW &nbsp;·&nbsp; ₹{{ charger.price_per_hour }}/hour</p>
+    <p>{{ charger.description }}</p>
+    <p class="card-owner">Hosted by <strong>{{ charger.owner.username }}</strong></p>
+  </div>
+
+  <div class="detail-side">
+    {% if user.is_authenticated %}
+      {% if user == charger.owner %}
+        <p class="empty-state">This is your own listing. View requests in your <a href="{% url 'owner_bookings' %}">owner dashboard</a>.</p>
+        <a href="{% url 'delete_charger' charger.pk %}" class="btn btn-outline" style="border-color:#ff6b6b;color:#ff9a9a;">Delete this listing</a>
+      {% else %}
+        <h2 class="side-title">Request this charger</h2>
+        <form method="post" class="stacked-form">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit" class="btn btn-primary">Send request</button>
+        </form>
+      {% endif %}
+    {% else %}
+      <p class="empty-state">
+        <a href="{% url 'login' %}" class="btn btn-outline">Log in</a> to request this charger.
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

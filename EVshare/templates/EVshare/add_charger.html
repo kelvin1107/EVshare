@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}List Your Charger — EVshare{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">List your charger</h1>
+<p class="card-meta">Click anywhere on the map to drop a pin at your charger's exact location — the address and city fields fill in automatically.</p>
+
+<div class="detail-layout">
+  <div class="detail-main">
+    <form method="post" class="stacked-form" id="chargerForm">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">Publish listing</button>
+    </form>
+  </div>
+
+  <div class="detail-side">
+    <h2 class="side-title">Pin the location</h2>
+
+    <form id="locationSearchForm" class="filter-bar" style="margin-bottom:12px;">
+      <input type="text" id="locationSearchInput" placeholder="Search city, town, or area" style="flex:1;">
+      <button type="submit" class="btn btn-primary">Go</button>
+    </form>
+    <div id="searchSuggestions" class="card-meta" style="margin-bottom:8px;"></div>
+
+    <div id="map" style="width:100%; height:360px; border-radius:var(--radius); border:1px solid var(--line);"></div>
+    <p class="card-meta" style="margin-top:10px;">Search an area above, then click or drag the pin to fine-tune the exact spot.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const defaultLocation = [9.9252, 78.1198]; // Madurai — change if you're elsewhere
+
+  const map = L.map('map').setView(defaultLocation, 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19,
+  }).addTo(map);
+
+  const marker = L.marker(defaultLocation, { draggable: true }).addTo(map);
+
+  function setFieldsFromLatLng(lat, lng) {
+    const roundedLat = Number(lat).toFixed(6);
+    const roundedLng = Number(lng).toFixed(6);
+
+    document.getElementById('id_latitude').value = roundedLat;
+    document.getElementById('id_longitude').value = roundedLng;
+
+    // Reverse geocode via OpenStreetMap's free Nominatim API
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${roundedLat}&lon=${roundedLng}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.display_name) {
+          document.getElementById('id_address').value = data.display_name;
+          const addr = data.address || {};
+          const city = addr.city || addr.town || addr.village || addr.county || '';
+          if (city) document.getElementById('id_city').value = city;
+        }
+      })
+      .catch(() => { /* geocoding failed silently — user can still type manually */ });
+  }
+
+  map.on('click', (e) => {
+    const { lat, lng } = e.latlng;
+    marker.setLatLng([lat, lng]);
+    setFieldsFromLatLng(lat, lng);
+  });
+
+  marker.on('dragend', () => {
+    const { lat, lng } = marker.getLatLng();
+    setFieldsFromLatLng(lat, lng);
+  });
+
+  // ---------- Search by city / town / area ----------
+  const searchForm = document.getElementById('locationSearchForm');
+  const searchInput = document.getElementById('locationSearchInput');
+  const suggestionsBox = document.getElementById('searchSuggestions');
+
+  function goToPlace(lat, lng, zoom = 14) {
+    map.setView([lat, lng], zoom);
+    marker.setLatLng([lat, lng]);
+    setFieldsFromLatLng(lat, lng);
+    suggestionsBox.innerHTML = '';
+  }
+
+  searchForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const query = searchInput.value.trim();
+    if (!query) return;
+
+    suggestionsBox.innerHTML = 'Searching…';
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(query)}`)
+      .then(res => res.json())
+      .then(results => {
+        if (!results || results.length === 0) {
+          suggestionsBox.innerHTML = 'No matches found — try a different spelling.';
+          return;
+        }
+
+        if (results.length === 1) {
+          goToPlace(results[0].lat, results[0].lon);
+          return;
+        }
+
+        // Multiple matches — let the user pick the right one
+        suggestionsBox.innerHTML = '';
+        results.forEach((place) => {
+          const item = document.createElement('div');
+          item.textContent = place.display_name;
+          item.style.cursor = 'pointer';
+          item.style.padding = '6px 0';
+          item.style.borderBottom = '1px solid var(--line)';
+          item.addEventListener('click', () => goToPlace(place.lat, place.lon));
+          suggestionsBox.appendChild(item);
+        });
+      })
+      .catch(() => {
+        suggestionsBox.innerHTML = 'Search failed — check your connection and try again.';
+      });
+  });
+</script>
+{% endblock %}

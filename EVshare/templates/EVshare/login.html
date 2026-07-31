@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Log In — EVshare{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Log in</h1>
+<form method="post" class="stacked-form form-narrow">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% endblock %}
